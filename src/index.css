@@ -1,0 +1,55 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Playfair+Display:ital,wght@0,700;0,900;1,700&family=JetBrains+Mono:wght@400;700&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-serif: "Playfair Display", serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+}
+
+@layer base {
+  body {
+    @apply text-slate-200 antialiased bg-[#0A0A0A];
+  }
+}
+
+.markdown-body {
+  @apply text-slate-300 leading-relaxed;
+}
+
+.markdown-body h1 {
+  @apply text-3xl font-bold mb-6 mt-8 pb-2 border-b border-white/5 text-white;
+}
+
+.markdown-body h2 {
+  @apply text-xl font-semibold mb-4 mt-8 text-white;
+}
+
+.markdown-body p {
+  @apply mb-4;
+}
+
+.markdown-body ul {
+  @apply list-disc list-inside mb-6 space-y-2;
+}
+
+.markdown-body li {
+  @apply text-sm md:text-base;
+}
+
+.markdown-body strong {
+  @apply font-bold text-white;
+}
+
+/* Scrollbar styling for dark theme */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-[#0A0A0A];
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-white/10 rounded-full hover:bg-white/20 transition-colors;
+}

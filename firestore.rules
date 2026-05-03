@@ -1,0 +1,97 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // 0. Global Safety Net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // --- Helpers ---
+    
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+    
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    // --- Entity Validations ---
+
+    function isValidUser(data) {
+      return data.keys().hasAll(['userId', 'email']) 
+        && data.userId == request.auth.uid
+        && data.email is string && data.email.size() <= 256
+        && ( !('name' in data) || (data.name is string && data.name.size() <= 128))
+        && ( !('role' in data) || (data.role in ['Intern', 'Junior', 'Senior']))
+        && ( !('resumeText' in data) || (data.resumeText is string && data.resumeText.size() <= 50000));
+    }
+
+    function isValidAnalysis(data) {
+      return data.keys().hasAll(['userId', 'matchScore'])
+        && data.userId == request.auth.uid
+        && data.matchScore is number && data.matchScore >= 0 && data.matchScore <= 100
+        && ( !('jdText' in data) || (data.jdText is string && data.jdText.size() <= 20000))
+        && ( !('explanation' in data) || (data.explanation is string && data.explanation.size() <= 5000));
+    }
+
+    function isValidInterview(data) {
+      return data.keys().hasAll(['userId', 'questions'])
+        && data.userId == request.auth.uid
+        && data.questions is list && data.questions.size() <= 50;
+    }
+
+    function isValidPlan(data) {
+      return data.keys().hasAll(['userId', 'duration', 'role'])
+        && data.userId == request.auth.uid
+        && data.duration in [7, 15, 30]
+        && ( !('dailyTasks' in data) || (data.dailyTasks is list && data.dailyTasks.size() <= 30));
+    }
+
+    // --- Match Rules ---
+
+    match /users/{userId} {
+      allow read: if isSignedIn();
+      allow create: if isOwner(userId) && isValidUser(incoming());
+      allow update: if isOwner(userId) && isValidUser(incoming()) 
+        && incoming().diff(existing()).affectedKeys().hasOnly(['name', 'role', 'resumeText', 'lastActivity']);
+      allow delete: if false; // Profiles are permanent for this app
+    }
+
+    match /analyses/{analysisId} {
+      allow get: if isOwner(existing().userId);
+      allow list: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow create: if isSignedIn() && isValidId(analysisId) && isValidAnalysis(incoming());
+      allow delete: if isOwner(existing().userId);
+    }
+
+    match /interviews/{interviewId} {
+      allow get: if isOwner(existing().userId);
+      allow list: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow create: if isSignedIn() && isValidId(interviewId) && isValidInterview(incoming());
+      allow delete: if isOwner(existing().userId);
+    }
+
+    match /plans/{planId} {
+      allow get: if isOwner(existing().userId);
+      allow list: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow create: if isSignedIn() && isValidId(planId) && isValidPlan(incoming());
+      allow update: if isOwner(existing().userId) && isValidPlan(incoming())
+        && incoming().diff(existing()).affectedKeys().hasOnly(['dailyTasks']);
+      allow delete: if isOwner(existing().userId);
+    }
+  }
+}

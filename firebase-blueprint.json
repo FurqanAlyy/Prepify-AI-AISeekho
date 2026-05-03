@@ -1,0 +1,102 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "User Profile",
+      "description": "Stores user candidate information and preferences",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "name": { "type": "string" },
+        "email": { "type": "string" },
+        "role": { "type": "string", "enum": ["Intern", "Junior", "Senior"] },
+        "resumeText": { "type": "string" },
+        "lastActivity": { "type": "string", "format": "date-time" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "email"]
+    },
+    "JobAnalysis": {
+      "title": "Job Analysis",
+      "description": "Analysis of resume against a job description",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "jdText": { "type": "string" },
+        "matchScore": { "type": "number" },
+        "skillGaps": { "type": "array", "items": { "type": "string" } },
+        "improvementAreas": { "type": "array", "items": { "type": "string" } },
+        "atsOptimizedResume": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "matchScore"]
+    },
+    "InterviewSession": {
+      "title": "Interview Session",
+      "description": "Stores details of a mock interview or question set",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "type": { "type": "string", "enum": ["Technical", "Behavioral", "Mixed"] },
+        "difficulty": { "type": "string", "enum": ["Easy", "Medium", "Hard"] },
+        "questions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "question": { "type": "string" },
+              "answer": { "type": "string" },
+              "userResponse": { "type": "string" },
+              "feedback": { "type": "string" },
+              "score": { "type": "number" }
+            }
+          }
+        },
+        "overallFeedback": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "type", "questions"]
+    },
+    "PrepPlan": {
+      "title": "Preparation Plan",
+      "description": "A daily study plan for a specific role and duration",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "duration": { "type": "number", "enum": [7, 15, 30] },
+        "role": { "type": "string" },
+        "jdText": { "type": "string" },
+        "dailyTasks": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "day": { "type": "number" },
+              "topic": { "type": "string" },
+              "tasks": { "type": "array", "items": { "type": "string" } }
+            }
+          }
+        },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "duration", "role"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "UserProfile",
+      "description": "User profiles"
+    },
+    "/analyses/{analysisId}": {
+      "schema": "JobAnalysis",
+      "description": "Resume-JD analyses"
+    },
+    "/interviews/{interviewId}": {
+      "schema": "InterviewSession",
+      "description": "Interview practice sessions"
+    },
+    "/plans/{planId}": {
+      "schema": "PrepPlan",
+      "description": "Preparation plans"
+    }
+  }
+}
